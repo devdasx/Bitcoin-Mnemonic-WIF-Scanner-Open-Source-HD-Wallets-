@@ -30,7 +30,7 @@ Open your Terminal (macOS) or Command Prompt (Windows) and run these commands:
 # Clone this repository
 git clone [https://github.com/devdasx/Bitcoin-Mnemonic-WIF-Scanner-Open-Source-HD-Wallets-.git](https://github.com/devdasx/Bitcoin-Mnemonic-WIF-Scanner-Open-Source-HD-Wallets-.git)
 
-# Go into the folder
+# Go into the folder using your Terminal
 cd Bitcoin-Mnemonic-WIF-Scanner-Open-Source-HD-Wallets--main
 
 # Install dependencies
