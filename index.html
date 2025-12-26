@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>BTC Scanner Pro</title>
+    <style>
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; 
+            background: #1e1e1e; 
+            color: #fff; 
+            padding: 20px; 
+            height: 100vh;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+        }
+        h2 { margin-top: 0; color: #fff; }
+        p { color: #aaa; margin-bottom: 5px; }
+        
+        textarea { 
+            width: 100%; 
+            height: 150px; 
+            background: #252526; 
+            color: #ddd; 
+            border: 1px solid #333; 
+            padding: 10px; 
+            font-size: 13px; 
+            font-family: monospace;
+            resize: none;
+            outline: none;
+            box-sizing: border-box;
+        }
+        textarea:focus { border-color: #0e639c; }
+
+        button { 
+            background: #0e639c; 
+            color: white; 
+            border: none; 
+            padding: 12px 24px; 
+            cursor: pointer; 
+            font-size: 14px; 
+            font-weight: 600;
+            margin-top: 10px; 
+            border-radius: 4px; 
+            transition: background 0.2s;
+        }
+        button:hover { background: #1177bb; }
+        button:disabled { background: #444; cursor: not-allowed; }
+
+        #status { 
+            margin-top: 20px; 
+            font-weight: bold; 
+            color: #4fc1ff; 
+            font-size: 16px; 
+            min-height: 20px;
+        }
+
+        .stats { 
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 10px; 
+            margin-top: 15px; 
+            background: #2d2d2d; 
+            padding: 15px; 
+            border-radius: 6px; 
+            font-size: 14px;
+        }
+        .stats div span { font-weight: bold; margin-left: 5px; }
+
+        h3 { margin-top: 20px; margin-bottom: 10px; border-bottom: 1px solid #333; padding-bottom: 5px; }
+
+        #results { 
+            flex-grow: 1; 
+            background: #111;
+            border: 1px solid #333;
+            padding: 10px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 13px;
+        }
+        .hit { 
+            color: #4caf50; 
+            border-bottom: 1px solid #222; 
+            padding: 4px 0; 
+        }
+    </style>
+</head>
+<body>
+    <h2>BTC Mnemonic & WIF Scanner</h2>
+    <p>Paste your list below (Mnemonics or WIFs):</p>
+    <textarea id="inputArea" placeholder="apple banana ...&#10;5K..."></textarea>
+    
+    <div>
+        <button id="scanBtn" onclick="startScan()">Start Scanning</button>
+    </div>
+
+    <div id="status">Ready</div>
+
+    <div class="stats">
+        <div>Progress: <span id="progStr">0/0</span></div>
+        <div>Speed: <span id="speedStr">0</span> lines/s</div>
+        <div>Found: <span id="foundStr" style="color:#4caf50">0</span></div>
+    </div>
+
+    <h3>Hits Found:</h3>
+    <div id="results"></div>
+
+    <script>
+        const { ipcRenderer } = require('electron');
+
+        function startScan() {
+            const text = document.getElementById('inputArea').value;
+            if(!text.trim()) return alert("Please paste some mnemonics first!");
+            
+            document.getElementById('status').innerText = "Validating and preparing...";
+            document.getElementById('results').innerHTML = ""; 
+            
+            // Disable button
+            const btn = document.getElementById('scanBtn');
+            btn.disabled = true;
+            btn.innerText = "Running...";
+            
+            ipcRenderer.send('start-scan', text);
+        }
+
+        ipcRenderer.on('status-update', (e, data) => {
+            document.getElementById('status').innerText = data.msg;
+        });
+
+        ipcRenderer.on('progress', (e, data) => {
+            const pct = ((data.processed / data.total) * 100).toFixed(1);
+            document.getElementById('status').innerText = `Scanning... ${pct}%`;
+            document.getElementById('progStr').innerText = `${data.processed}/${data.total}`;
+            document.getElementById('speedStr').innerText = data.speed;
+            document.getElementById('foundStr').innerText = data.found;
+        });
+
+        ipcRenderer.on('hit-found', (e, data) => {
+            const div = document.createElement('div');
+            div.className = 'hit';
+            div.innerText = `[${data.balance} BTC] ${data.line}`;
+            document.getElementById('results').appendChild(div);
+        });
+
+        ipcRenderer.on('finished', (e, data) => {
+            document.getElementById('status').innerText = `Done! Found ${data.found} wallets.`;
+            const btn = document.getElementById('scanBtn');
+            btn.disabled = false;
+            btn.innerText = "Start Scanning";
+            alert(`Scan Complete! Found ${data.found} wallets.`);
+        });
+    </script>
+</body>
+</html>
