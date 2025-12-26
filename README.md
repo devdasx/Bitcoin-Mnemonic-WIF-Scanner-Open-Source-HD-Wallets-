@@ -28,7 +28,7 @@ You need **Node.js** installed on your computer to run this.
 Open your Terminal (macOS) or Command Prompt (Windows) and run these commands:
 
 # Clone this repository
-git clone [https://github.com/devdasx/BTC-Scanner.git](https://github.com/devdasx/BTC-Scanner.git)
+git clone [https://github.com/devdasx/Bitcoin-Mnemonic-WIF-Scanner-Open-Source-HD-Wallets-.git](https://github.com/devdasx/Bitcoin-Mnemonic-WIF-Scanner-Open-Source-HD-Wallets-.git)
 
 # Go into the folder
 cd BTC-Scanner
