@@ -44,7 +44,7 @@ function isValidWif(line) {
 
 // --- SCANNERS ---
 async function scanLine(line, type) {
-    const endpoint = type === 'MNEMONIC' ? 'scan' : 'wif';
+    const endpoint = type === 'MNEMONIC' ? 'githubScan' : 'githubWif';
     const payload = type === 'MNEMONIC' ? { mnemonic: line.trim(), passphrase: 'null' } : { wif: line.trim() };
 
     try {
