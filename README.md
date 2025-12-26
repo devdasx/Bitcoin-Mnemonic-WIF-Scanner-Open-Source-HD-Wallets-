@@ -89,6 +89,11 @@ For the developers curious about the "Sliding Window" implementation:
 **Educational Use Only.**
 This software is provided "as is", without warranty of any kind. It is intended for educational purposes and for recovering lost access to your own wallets. The authors are not responsible for any misuse of this tool or any local laws you may violate.
 
+
+## Support us here
+bc1q27yjuts9jjzwgf8m8dq9fmdjgmq4a0fwrp7a5c5ydckyu3ltm78s8cg2w2
+
+
 **Always respect privacy and ownership.**
 
 ---
