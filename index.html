@@ -1,135 +1,351 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>BTC Scanner Pro</title>
+    <meta charset="UTF-8">
+    <title>Universal Bitcoin Scanner</title>
     <style>
-        body { 
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; 
-            background: #1e1e1e; 
-            color: #fff; 
-            padding: 20px; 
+        :root {
+            --bg-color: #121212;
+            --card-bg: #1e1e1e;
+            --text-color: #e0e0e0;
+            --text-muted: #a0a0a0;
+            --primary: #007acc;
+            --primary-hover: #0062a3;
+            --danger: #d32f2f;
+            --danger-hover: #b71c1c;
+            --success: #388e3c;
+            --border: #333;
+            --shadow: 0 4px 12px rgba(0,0,0,0.3);
+        }
+
+        /* Light Mode Variables */
+        [data-theme="light"] {
+            --bg-color: #f5f5f5;
+            --card-bg: #ffffff;
+            --text-color: #333333;
+            --text-muted: #666666;
+            --primary: #007acc;
+            --primary-hover: #005fa3;
+            --border: #ddd;
+            --shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        * { box-sizing: border-box; transition: background 0.3s, color 0.3s; }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
             height: 100vh;
-            box-sizing: border-box;
             display: flex;
             flex-direction: column;
         }
-        h2 { margin-top: 0; color: #fff; }
-        p { color: #aaa; margin-bottom: 5px; }
+
+        /* Header */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .title { font-size: 24px; font-weight: 700; display: flex; align-items: center; gap: 10px; }
+        .icon { font-size: 24px; }
         
-        textarea { 
-            width: 100%; 
-            height: 150px; 
-            background: #252526; 
-            color: #ddd; 
-            border: 1px solid #333; 
-            padding: 10px; 
-            font-size: 13px; 
-            font-family: monospace;
+        .controls { display: flex; gap: 10px; }
+        .btn-icon {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            color: var(--text-color);
+            padding: 8px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        .btn-icon:hover { background: var(--border); }
+
+        /* Main Card */
+        .card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border);
+            flex-shrink: 0;
+        }
+
+        textarea {
+            width: 100%;
+            height: 120px;
+            background: var(--bg-color);
+            color: var(--text-color);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 12px;
+            font-family: 'SF Mono', 'Monaco', 'Courier New', monospace;
+            font-size: 13px;
             resize: none;
             outline: none;
-            box-sizing: border-box;
         }
-        textarea:focus { border-color: #0e639c; }
+        textarea:focus { border-color: var(--primary); }
 
-        button { 
-            background: #0e639c; 
-            color: white; 
-            border: none; 
-            padding: 12px 24px; 
-            cursor: pointer; 
-            font-size: 14px; 
+        /* Action Buttons */
+        .actions { margin-top: 15px; display: flex; gap: 10px; }
+        
+        .btn {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
             font-weight: 600;
-            margin-top: 10px; 
-            border-radius: 4px; 
-            transition: background 0.2s;
-        }
-        button:hover { background: #1177bb; }
-        button:disabled { background: #444; cursor: not-allowed; }
-
-        #status { 
-            margin-top: 20px; 
-            font-weight: bold; 
-            color: #4fc1ff; 
-            font-size: 16px; 
-            min-height: 20px;
-        }
-
-        .stats { 
-            display: grid;
-            grid-template-columns: 1fr 1fr 1fr;
-            gap: 10px; 
-            margin-top: 15px; 
-            background: #2d2d2d; 
-            padding: 15px; 
-            border-radius: 6px; 
             font-size: 14px;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
-        .stats div span { font-weight: bold; margin-left: 5px; }
+        .btn-start { background: var(--primary); color: white; }
+        .btn-start:hover { background: var(--primary-hover); }
+        .btn-start:disabled { background: #555; cursor: not-allowed; }
+        
+        .btn-stop { background: var(--danger); color: white; display: none; }
+        .btn-stop:hover { background: var(--danger-hover); }
 
-        h3 { margin-top: 20px; margin-bottom: 10px; border-bottom: 1px solid #333; padding-bottom: 5px; }
-
-        #results { 
-            flex-grow: 1; 
-            background: #111;
-            border: 1px solid #333;
+        /* Stats Bar */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+            margin-top: 20px;
+        }
+        .stat-item {
+            background: var(--bg-color);
             padding: 10px;
+            border-radius: 8px;
+            text-align: center;
+            border: 1px solid var(--border);
+        }
+        .stat-label { font-size: 12px; color: var(--text-muted); text-transform: uppercase; }
+        .stat-value { font-size: 18px; font-weight: bold; margin-top: 5px; }
+        .text-green { color: var(--success); }
+
+        /* Progress Bar */
+        .progress-container {
+            width: 100%;
+            height: 6px;
+            background: var(--bg-color);
+            margin-top: 20px;
+            border-radius: 3px;
+            overflow: hidden;
+        }
+        .progress-bar {
+            height: 100%;
+            width: 0%;
+            background: var(--primary);
+            transition: width 0.3s;
+        }
+
+        /* Results Area */
+        h3 { margin: 20px 0 10px 0; font-size: 16px; color: var(--text-muted); }
+        #results {
+            flex-grow: 1;
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 15px;
             overflow-y: auto;
             font-family: monospace;
             font-size: 13px;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
         }
-        .hit { 
-            color: #4caf50; 
-            border-bottom: 1px solid #222; 
-            padding: 4px 0; 
+        .hit {
+            padding: 8px;
+            border-bottom: 1px solid var(--border);
+            color: var(--success);
+            display: flex;
+            justify-content: space-between;
+        }
+        .hit:last-child { border-bottom: none; }
+
+        /* Modal Info */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.7);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        .modal-content {
+            background: var(--card-bg);
+            padding: 30px;
+            border-radius: 12px;
+            width: 500px;
+            max-width: 90%;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+            position: relative;
+        }
+        .modal-header { font-size: 20px; font-weight: bold; margin-bottom: 15px; }
+        .modal-body { font-size: 14px; line-height: 1.6; color: var(--text-muted); }
+        .modal-body a { color: var(--primary); text-decoration: none; }
+        .close-btn {
+            position: absolute; top: 15px; right: 15px;
+            background: none; border: none; font-size: 24px;
+            color: var(--text-muted); cursor: pointer;
         }
     </style>
 </head>
 <body>
-    <h2>BTC Mnemonic & WIF Scanner</h2>
-    <p>Paste your list below (Mnemonics or WIFs):</p>
-    <textarea id="inputArea" placeholder="apple banana ...&#10;5K..."></textarea>
-    
-    <div>
-        <button id="scanBtn" onclick="startScan()">Start Scanning</button>
+
+    <div class="header">
+        <div class="title">
+            <span class="icon">⚡</span> BTC Scanner Pro
+        </div>
+        <div class="controls">
+            <button class="btn-icon" onclick="toggleTheme()" id="themeBtn">☀️</button>
+            <button class="btn-icon" onclick="openModal()">ℹ️ Help</button>
+        </div>
     </div>
 
-    <div id="status">Ready</div>
+    <div class="card">
+        <textarea id="inputArea" placeholder="Paste your Mnemonics (12-24 words) or WIF Private Keys here..."></textarea>
+        
+        <div class="actions">
+            <button id="startBtn" class="btn btn-start" onclick="startScan()">Start Scan</button>
+            <button id="stopBtn" class="btn btn-stop" onclick="stopScan()">Stop Scan</button>
+        </div>
 
-    <div class="stats">
-        <div>Progress: <span id="progStr">0/0</span></div>
-        <div>Speed: <span id="speedStr">0</span> lines/s</div>
-        <div>Found: <span id="foundStr" style="color:#4caf50">0</span></div>
+        <div class="progress-container">
+            <div class="progress-bar" id="progressBar"></div>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-item">
+                <div class="stat-label">Progress</div>
+                <div class="stat-value" id="progStr">0 / 0</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-label">Speed</div>
+                <div class="stat-value"><span id="speedStr">0</span> <small>lines/s</small></div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-label">Found</div>
+                <div class="stat-value text-green" id="foundStr">0</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-label">Status</div>
+                <div class="stat-value" id="statusStr" style="font-size: 14px;">Ready</div>
+            </div>
+        </div>
     </div>
 
-    <h3>Hits Found:</h3>
-    <div id="results"></div>
+    <h3>🔍 Live Results</h3>
+    <div id="results">
+        <div style="text-align: center; color: var(--text-muted); margin-top: 20px;">
+            Results will appear here...
+        </div>
+    </div>
+
+    <div id="infoModal" class="modal">
+        <div class="modal-content">
+            <button class="close-btn" onclick="closeModal()">&times;</button>
+            <div class="modal-header">Welcome to BTC Scanner</div>
+            <div class="modal-body">
+                <p>This is an <b>Open Source</b> tool developed for the Bitcoin community to recover and check wallets efficiently.</p>
+                
+                <p><b>How to use:</b></p>
+                <ol>
+                    <li>Paste a list of <b>Mnemonics</b> (12-24 words) or <b>WIF Keys</b>.</li>
+                    <li>Click <b>Start Scan</b>.</li>
+                    <li>Wait for results. Hits are saved to your Desktop.</li>
+                </ol>
+                
+                <p>
+                    💻 <b>Source Code:</b><br>
+                    <a href="https://github.com/devdasx/Bitcoin-Mnemonic-WIF-Scanner-Open-Source-HD-Wallets-" target="_blank">
+                        View on GitHub (devdasx/Bitcoin-Scanner)
+                    </a>
+                </p>
+
+                <p style="font-size: 12px; margin-top: 20px; opacity: 0.7;">
+                    <i>Disclaimer: This tool is for educational and recovery purposes only.</i>
+                </p>
+            </div>
+        </div>
+    </div>
 
     <script>
         const { ipcRenderer } = require('electron');
 
+        // Theme Logic
+        function toggleTheme() {
+            const body = document.body;
+            const btn = document.getElementById('themeBtn');
+            const currentTheme = body.getAttribute('data-theme');
+            
+            if (currentTheme === 'light') {
+                body.setAttribute('data-theme', 'dark');
+                btn.innerText = '☀️';
+                localStorage.setItem('theme', 'dark');
+            } else {
+                body.setAttribute('data-theme', 'light');
+                btn.innerText = '🌙';
+                localStorage.setItem('theme', 'light');
+            }
+        }
+
+        // Load saved theme
+        if(localStorage.getItem('theme') === 'light') {
+            document.body.setAttribute('data-theme', 'light');
+            document.getElementById('themeBtn').innerText = '🌙';
+        }
+
+        // Modal Logic
+        function openModal() { document.getElementById('infoModal').style.display = 'flex'; }
+        function closeModal() { document.getElementById('infoModal').style.display = 'none'; }
+        
+        // Close modal on outside click
+        window.onclick = function(event) {
+            const modal = document.getElementById('infoModal');
+            if (event.target === modal) closeModal();
+        }
+
+        // Scan Logic
         function startScan() {
             const text = document.getElementById('inputArea').value;
-            if(!text.trim()) return alert("Please paste some mnemonics first!");
-            
-            document.getElementById('status').innerText = "Validating and preparing...";
+            if(!text.trim()) return alert("Please enter some keys first!");
+
+            document.getElementById('startBtn').style.display = 'none';
+            document.getElementById('stopBtn').style.display = 'block';
             document.getElementById('results').innerHTML = ""; 
-            
-            // Disable button
-            const btn = document.getElementById('scanBtn');
-            btn.disabled = true;
-            btn.innerText = "Running...";
+            document.getElementById('statusStr').innerText = "Initializing...";
             
             ipcRenderer.send('start-scan', text);
         }
 
+        function stopScan() {
+            if(confirm("Are you sure you want to stop the scan?")) {
+                ipcRenderer.send('stop-scan');
+                document.getElementById('statusStr').innerText = "Stopping...";
+            }
+        }
+
+        function resetButtons() {
+            document.getElementById('startBtn').style.display = 'block';
+            document.getElementById('stopBtn').style.display = 'none';
+        }
+
+        // IPC Events
         ipcRenderer.on('status-update', (e, data) => {
-            document.getElementById('status').innerText = data.msg;
+            document.getElementById('statusStr').innerText = "Running";
+            document.getElementById('progStr').innerText = `0 / ${data.total}`;
         });
 
         ipcRenderer.on('progress', (e, data) => {
-            const pct = ((data.processed / data.total) * 100).toFixed(1);
-            document.getElementById('status').innerText = `Scanning... ${pct}%`;
-            document.getElementById('progStr').innerText = `${data.processed}/${data.total}`;
+            const pct = ((data.processed / data.total) * 100);
+            document.getElementById('progressBar').style.width = pct + '%';
+            document.getElementById('progStr').innerText = `${data.processed} / ${data.total}`;
             document.getElementById('speedStr').innerText = data.speed;
             document.getElementById('foundStr').innerText = data.found;
         });
@@ -137,16 +353,15 @@
         ipcRenderer.on('hit-found', (e, data) => {
             const div = document.createElement('div');
             div.className = 'hit';
-            div.innerText = `[${data.balance} BTC] ${data.line}`;
-            document.getElementById('results').appendChild(div);
+            div.innerHTML = `<span>${data.line}</span> <b>${data.balance} BTC</b>`;
+            document.getElementById('results').prepend(div);
         });
 
         ipcRenderer.on('finished', (e, data) => {
-            document.getElementById('status').innerText = `Done! Found ${data.found} wallets.`;
-            const btn = document.getElementById('scanBtn');
-            btn.disabled = false;
-            btn.innerText = "Start Scanning";
-            alert(`Scan Complete! Found ${data.found} wallets.`);
+            resetButtons();
+            const msg = data.stopped ? "Scan Stopped" : "Scan Complete";
+            document.getElementById('statusStr').innerText = msg;
+            alert(`${msg}! Found ${data.found} wallets.`);
         });
     </script>
 </body>
