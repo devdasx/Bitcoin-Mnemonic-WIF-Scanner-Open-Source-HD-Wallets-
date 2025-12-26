@@ -1,17 +1,19 @@
-const { app, BrowserWindow, ipcMain, shell } = require('electron');
+const { app, BrowserWindow, ipcMain, shell, dialog } = require('electron');
 const path = require('path');
 const axios = require('axios');
 const bip39 = require('bip39');
 const fs = require('fs');
 
 let mainWindow;
-let isScanning = false; // Flag to control scanning
+let isScanning = false; 
 
 function createWindow() {
     mainWindow = new BrowserWindow({
-        width: 1000,
-        height: 800,
-        backgroundColor: '#1e1e1e', // Default dark
+        width: 1050,
+        height: 850,
+        minWidth: 800,
+        minHeight: 600,
+        backgroundColor: '#1e1e1e',
         webPreferences: {
             nodeIntegration: true,
             contextIsolation: false
@@ -20,7 +22,6 @@ function createWindow() {
 
     mainWindow.loadFile('index.html');
 
-    // Open links in external browser (for GitHub)
     mainWindow.webContents.setWindowOpenHandler(({ url }) => {
         shell.openExternal(url);
         return { action: 'deny' };
@@ -52,6 +53,27 @@ function isValidWif(line) {
     return ['5', 'K', 'L'].includes(firstChar);
 }
 
+// --- FILE SYSTEM HANDLERS ---
+ipcMain.handle('open-file-dialog', async () => {
+    const { canceled, filePaths } = await dialog.showOpenDialog(mainWindow, {
+        properties: ['openFile'],
+        filters: [{ name: 'Text Files', extensions: ['txt'] }]
+    });
+    if (canceled || filePaths.length === 0) return null;
+    
+    // Read the file and return content
+    try {
+        return fs.readFileSync(filePaths[0], 'utf8');
+    } catch (err) {
+        return null;
+    }
+});
+
+ipcMain.on('open-results-folder', () => {
+    // Opens the Desktop folder where we save files
+    shell.openPath(app.getPath('desktop'));
+});
+
 // --- SCANNERS ---
 async function scanLine(line, type) {
     const endpoint = type === 'MNEMONIC' ? 'scan' : 'wif';
@@ -66,23 +88,18 @@ async function scanLine(line, type) {
     }
 }
 
-// --- STOP HANDLER ---
-ipcMain.on('stop-scan', () => {
-    isScanning = false;
-});
+ipcMain.on('stop-scan', () => { isScanning = false; });
 
-// --- WORKER LOGIC ---
 ipcMain.on('start-scan', async (event, rawText) => {
-    isScanning = true; // Enable scanning flag
+    isScanning = true;
 
     const lines = rawText.split('\n').map(l => l.trim()).filter(l => l.length > 0);
     const uniqueLines = [...new Set(lines)];
     const validItems = uniqueLines.filter(l => isValidMnemonic(l) || isValidWif(l));
     
-    // Notify UI
     mainWindow.webContents.send('status-update', { 
         total: validItems.length, 
-        msg: `Prepared ${validItems.length} items. Starting engine...` 
+        msg: `Prepared ${validItems.length} valid items.` 
     });
 
     let processedCount = 0;
@@ -90,7 +107,7 @@ ipcMain.on('start-scan', async (event, rawText) => {
     const startTime = Date.now();
 
     const processItem = async (line) => {
-        if (!isScanning) return; // Stop if flag is false
+        if (!isScanning) return;
 
         let attempts = 0;
         let success = false;
@@ -119,7 +136,6 @@ ipcMain.on('start-scan', async (event, rawText) => {
         
         processedCount++;
         
-        // Only update UI every 10 items to save CPU
         if (processedCount % 10 === 0 || processedCount === validItems.length) {
             const elapsed = (Date.now() - startTime) / 1000;
             const speed = elapsed > 0 ? (processedCount / elapsed).toFixed(1) : "0.0";
@@ -133,11 +149,10 @@ ipcMain.on('start-scan', async (event, rawText) => {
         }
     };
 
-    // Parallel Workers (Sliding Window)
     const iterator = validItems[Symbol.iterator]();
     const workers = new Array(CONCURRENCY_LIMIT).fill(0).map(async () => {
         for (const item of iterator) {
-            if (!isScanning) break; // Break loop if stopped
+            if (!isScanning) break;
             await processItem(item);
         }
     });
