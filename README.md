@@ -35,3 +35,6 @@ cd Bitcoin-Mnemonic-WIF-Scanner-Open-Source-HD-Wallets--main
 
 # Install dependencies
 npm install
+
+# Start the app
+npm start
