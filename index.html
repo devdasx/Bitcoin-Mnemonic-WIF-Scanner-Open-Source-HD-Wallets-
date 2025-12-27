@@ -6,19 +6,17 @@
     <style>
         :root {
             /* Apple System Colors - Dark Mode Default */
-            --bg-body: #1c1c1e; /* Deep dark grey, not pure black */
-            --bg-card: #2c2c2e; /* Lighter grey for cards */
+            --bg-body: #1c1c1e;
+            --bg-card: #2c2c2e;
             --bg-input: #1c1c1e;
             --text-primary: #ffffff;
-            --text-secondary: #ebebf599; /* 60% white */
-            --text-tertiary: #ebebf54d;  /* 30% white */
+            --text-secondary: #ebebf599;
+            --text-tertiary: #ebebf54d;
             
             --accent-blue: #0a84ff;
             --accent-blue-hover: #0077ed;
             --accent-red: #ff453a;
-            --accent-red-hover: #ff3b30;
             --accent-green: #32d74b;
-            
             --separator: #38383a;
             --focus-ring: rgba(10, 132, 255, 0.5);
             
@@ -30,20 +28,16 @@
             --header-blur: rgba(28, 28, 30, 0.85);
         }
 
-        /* Light Mode Overrides */
         [data-theme="light"] {
-            --bg-body: #f5f5f7; /* Apple off-white */
+            --bg-body: #f5f5f7;
             --bg-card: #ffffff;
             --bg-input: #f5f5f7;
             --text-primary: #1d1d1f;
             --text-secondary: #86868b;
             --text-tertiary: #d2d2d7;
-            
             --accent-blue: #0071e3;
-            --accent-blue-hover: #0077ed;
             --accent-red: #ff3b30;
             --accent-green: #34c759;
-            
             --separator: #d2d2d7;
             --header-blur: rgba(255, 255, 255, 0.85);
             --shadow: 0 8px 24px rgba(0,0,0,0.08);
@@ -60,10 +54,10 @@
             height: 100vh;
             display: flex;
             flex-direction: column;
-            overflow: hidden; /* Prevent body scroll, use inner scrolling */
+            overflow: hidden;
         }
 
-        /* --- Glassmorphism Header --- */
+        /* --- Header --- */
         .header {
             height: 60px;
             display: flex;
@@ -72,38 +66,17 @@
             padding: 0 24px;
             background: var(--header-blur);
             backdrop-filter: saturate(180%) blur(20px);
-            -webkit-backdrop-filter: saturate(180%) blur(20px);
             position: sticky;
             top: 0;
             z-index: 100;
             border-bottom: 1px solid var(--separator);
         }
-        
-        .title { 
-            font-size: 17px; 
-            font-weight: 600; 
-            letter-spacing: -0.02em;
-            display: flex; 
-            align-items: center; 
-            gap: 8px; 
-        }
-
+        .title { font-size: 17px; font-weight: 600; letter-spacing: -0.02em; display: flex; align-items: center; gap: 8px; }
         .controls { display: flex; gap: 12px; }
-
-        .btn-icon {
-            background: transparent;
-            border: none;
-            color: var(--accent-blue);
-            font-size: 13px;
-            font-weight: 500;
-            cursor: pointer;
-            padding: 6px 10px;
-            border-radius: var(--radius-s);
-            transition: all 0.2s;
-        }
+        .btn-icon { background: transparent; border: none; color: var(--accent-blue); font-size: 13px; font-weight: 500; cursor: pointer; padding: 6px 10px; border-radius: var(--radius-s); }
         .btn-icon:hover { background: var(--separator); }
 
-        /* --- Main Content Layout --- */
+        /* --- Container --- */
         .container {
             flex: 1;
             padding: 24px;
@@ -116,7 +89,6 @@
             width: 100%;
         }
 
-        /* --- Apple-Style Cards --- */
         .card {
             background: var(--bg-card);
             border-radius: var(--radius-l);
@@ -125,341 +97,236 @@
             position: relative;
         }
 
-        /* --- Toolbar --- */
-        .input-toolbar {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 12px;
-        }
-        .label { 
-            font-size: 13px; 
-            font-weight: 600; 
-            color: var(--text-secondary); 
-            text-transform: uppercase; 
-            letter-spacing: 0.05em;
-        }
-
-        .action-link {
-            font-size: 13px;
-            color: var(--accent-blue);
-            cursor: pointer;
-            margin-left: 16px;
-            text-decoration: none;
-        }
+        /* --- Inputs --- */
+        .input-toolbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+        .label { font-size: 13px; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; }
+        .action-link { font-size: 13px; color: var(--accent-blue); cursor: pointer; margin-left: 16px; text-decoration: none; }
         .action-link:hover { text-decoration: underline; }
 
-        /* --- Textarea --- */
         textarea {
-            width: 100%;
-            height: 140px;
-            background: var(--bg-input);
-            color: var(--text-primary);
-            border: 1px solid transparent;
-            border-radius: var(--radius-m);
-            padding: 16px;
-            font-family: 'SF Mono', 'Menlo', 'Monaco', 'Courier New', monospace;
-            font-size: 13px;
-            line-height: 1.5;
-            resize: none;
+            width: 100%; height: 140px; background: var(--bg-input); color: var(--text-primary);
+            border: 1px solid transparent; border-radius: var(--radius-m); padding: 16px;
+            font-family: 'SF Mono', monospace; font-size: 13px; line-height: 1.5; resize: none;
         }
-        textarea:focus { 
-            background: var(--bg-input); 
-            box-shadow: 0 0 0 3px var(--focus-ring); 
-        }
+        textarea:focus { background: var(--bg-input); box-shadow: 0 0 0 3px var(--focus-ring); }
+        textarea:disabled { opacity: 0.5; cursor: not-allowed; }
 
-        /* --- Primary Buttons --- */
-        .actions { margin-top: 20px; display: flex; gap: 12px; }
+        /* --- Button Groups (The Magic Part) --- */
+        .actions-wrapper { margin-top: 20px; height: 44px; position: relative; }
         
-        .btn {
-            flex: 1;
-            height: 44px;
-            border: none;
-            border-radius: var(--radius-m);
-            font-size: 15px;
-            font-weight: 600;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: transform 0.1s active;
+        /* Groups: Start, Stop, Resume, Finished */
+        .btn-group {
+            display: flex; gap: 12px; width: 100%; height: 100%;
+            position: absolute; top: 0; left: 0;
+            opacity: 0; pointer-events: none; transition: opacity 0.2s;
         }
+        .btn-group.active { opacity: 1; pointer-events: all; }
+
+        .btn { flex: 1; height: 44px; border: none; border-radius: var(--radius-m); font-size: 15px; font-weight: 600; cursor: pointer; transition: transform 0.1s; }
         .btn:active { transform: scale(0.98); }
 
         .btn-start { background: var(--accent-blue); color: white; }
         .btn-start:hover { background: var(--accent-blue-hover); }
-        
-        .btn-stop { background: var(--bg-card); color: var(--accent-red); border: 1px solid var(--accent-red); display: none; }
+
+        .btn-stop { background: var(--bg-card); color: var(--accent-red); border: 1px solid var(--accent-red); }
         .btn-stop:hover { background: var(--accent-red); color: white; }
 
-        /* --- Stats Widgets --- */
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 16px;
-            margin-top: 24px;
-        }
-        .stat-item {
-            background: var(--bg-input);
-            padding: 16px;
-            border-radius: var(--radius-m);
-            text-align: center;
-        }
-        .stat-label { 
-            font-size: 11px; 
-            color: var(--text-secondary); 
-            font-weight: 600; 
-            text-transform: uppercase; 
-            margin-bottom: 4px; 
-        }
+        .btn-resume { background: var(--accent-green); color: white; }
+        .btn-clear { background: var(--bg-input); color: var(--text-secondary); border: 1px solid var(--separator); }
+        .btn-clear:hover { border-color: var(--accent-red); color: var(--accent-red); }
+
+        .btn-done { background: var(--bg-input); color: var(--accent-green); border: 1px solid var(--accent-green); cursor: default; }
+
+        /* --- Stats --- */
+        .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-top: 24px; }
+        .stat-item { background: var(--bg-input); padding: 16px; border-radius: var(--radius-m); text-align: center; }
+        .stat-label { font-size: 11px; color: var(--text-secondary); font-weight: 600; text-transform: uppercase; margin-bottom: 4px; }
         .stat-value { font-size: 20px; font-weight: 700; color: var(--text-primary); }
         .text-green { color: var(--accent-green); }
 
-        /* --- Progress Bar --- */
-        .progress-track {
-            height: 6px;
-            background: var(--separator);
-            border-radius: 10px;
-            overflow: hidden;
-            margin-top: 24px;
-        }
-        .progress-fill {
-            height: 100%;
-            width: 0%;
-            background: var(--accent-blue);
-            border-radius: 10px;
-            transition: width 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
-        }
+        /* --- Progress --- */
+        .progress-track { height: 6px; background: var(--separator); border-radius: 10px; overflow: hidden; margin-top: 24px; }
+        .progress-fill { height: 100%; width: 0%; background: var(--accent-blue); border-radius: 10px; transition: width 0.4s ease; }
 
-        /* --- Results List --- */
-        .results-section {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            min-height: 0; /* Important for nested flex scroll */
-        }
+        /* --- Results --- */
+        .results-section { flex: 1; display: flex; flex-direction: column; min-height: 0; }
         .results-header { margin: 10px 0 16px 0; font-size: 13px; font-weight: 600; color: var(--text-secondary); }
-
-        #results {
-            background: var(--bg-card);
-            border-radius: var(--radius-l);
-            box-shadow: var(--shadow);
-            flex-grow: 1;
-            overflow-y: auto;
-            padding: 0;
-        }
+        #results { background: var(--bg-card); border-radius: var(--radius-l); box-shadow: var(--shadow); flex-grow: 1; overflow-y: auto; padding: 0; }
         
-        .hit {
-            padding: 16px 20px;
-            border-bottom: 1px solid var(--separator);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            font-family: 'SF Mono', monospace;
-            font-size: 13px;
-        }
+        .hit { padding: 12px 20px; border-bottom: 1px solid var(--separator); display: flex; justify-content: space-between; align-items: center; font-family: 'SF Mono', monospace; font-size: 13px; animation: fadeIn 0.3s ease; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
         .hit:last-child { border-bottom: none; }
-        .hit-key { color: var(--text-secondary); }
-        .hit-bal { color: var(--accent-green); font-weight: 700; background: rgba(50, 215, 75, 0.1); padding: 4px 8px; border-radius: 6px; }
+        .hit-left { display: flex; flex-direction: column; gap: 4px; overflow: hidden; }
+        .hit-key { color: var(--text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 400px; }
+        .hit-bal { color: var(--accent-green); font-weight: 700; font-size: 14px; }
+        .copy-btn { background: var(--bg-input); border: 1px solid var(--separator); color: var(--accent-blue); font-size: 12px; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-weight: 500; }
+        .copy-btn:hover { background: var(--separator); }
 
-        /* --- Apple Style Modal --- */
-        .modal-overlay {
-            display: none;
-            position: fixed;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(0, 0, 0, 0.4);
-            backdrop-filter: blur(5px);
-            z-index: 1000;
-            align-items: center;
-            justify-content: center;
-            opacity: 0;
-            transition: opacity 0.2s;
-        }
+        /* --- Modal --- */
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.4); backdrop-filter: blur(5px); z-index: 1000; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.2s; }
         .modal-overlay.active { display: flex; opacity: 1; }
-
-        .modal-box {
-            background: var(--bg-card);
-            width: 500px;
-            max-width: 90%;
-            border-radius: 18px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
-            padding: 32px;
-            transform: scale(0.95);
-            transition: transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
-        }
+        .modal-box { background: var(--bg-card); width: 500px; max-width: 90%; border-radius: 18px; box-shadow: 0 20px 40px rgba(0,0,0,0.3); padding: 32px; transform: scale(0.95); transition: transform 0.2s; }
         .modal-overlay.active .modal-box { transform: scale(1); }
-
         .modal-title { font-size: 22px; font-weight: 700; margin-bottom: 16px; text-align: center; }
         .modal-body { font-size: 15px; line-height: 1.6; color: var(--text-secondary); }
-        .modal-body strong { color: var(--text-primary); }
-        
-        .modal-btn {
-            margin-top: 24px;
-            width: 100%;
-            height: 44px;
-            background: var(--bg-input);
-            color: var(--accent-blue);
-            font-size: 16px;
-            font-weight: 600;
-            border: none;
-            border-radius: 12px;
-            cursor: pointer;
-        }
-        .modal-btn:hover { background: var(--separator); }
-
-        /* Scrollbar */
-        ::-webkit-scrollbar { width: 8px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: var(--separator); border-radius: 4px; }
-        ::-webkit-scrollbar-thumb:hover { background: #555; }
+        .modal-btn { margin-top: 24px; width: 100%; height: 44px; background: var(--bg-input); color: var(--accent-blue); font-size: 16px; font-weight: 600; border: none; border-radius: 12px; cursor: pointer; }
     </style>
 </head>
 <body>
 
     <header class="header">
-        <div class="title">
-            <span style="font-size: 20px;">⚡</span> Bitcoin Scanner
-        </div>
+        <div class="title"><span style="font-size: 20px;">⚡</span> Bitcoin Scanner</div>
         <div class="controls">
             <button class="btn-icon" onclick="openResultsFolder()">Results Folder</button>
             <button class="btn-icon" onclick="toggleTheme()" id="themeBtn">Light Mode</button>
-            <button class="btn-icon" onclick="openModal()" style="color: var(--accent-blue);">Help</button>
+            <button class="btn-icon" onclick="openModal()">Help</button>
         </div>
     </header>
 
     <div class="container">
-        
         <div class="card">
             <div class="input-toolbar">
                 <span class="label">Input Source</span>
                 <div>
                     <span class="action-link" onclick="loadFile()">Import Text File...</span>
-                    <span class="action-link" style="color: var(--accent-red);" onclick="clearInput()">Clear</span>
+                    <span class="action-link" style="color: var(--accent-red);" onclick="clearAll()">Clear All</span>
                 </div>
             </div>
-
+            
             <textarea id="inputArea" placeholder="Paste Mnemonics or WIFs here..."></textarea>
             
-            <div class="progress-track">
-                <div class="progress-fill" id="progressBar"></div>
-            </div>
+            <div class="progress-track"><div class="progress-fill" id="progressBar"></div></div>
 
             <div class="stats-grid">
-                <div class="stat-item">
-                    <div class="stat-label">Progress</div>
-                    <div class="stat-value" id="progStr">0 / 0</div>
+                <div class="stat-item"><div class="stat-label">Progress</div><div class="stat-value" id="progStr">0 / 0</div></div>
+                <div class="stat-item"><div class="stat-label">Speed</div><div class="stat-value"><span id="speedStr">0</span> <small style="font-size:12px; color:var(--text-tertiary)">/s</small></div></div>
+                <div class="stat-item"><div class="stat-label">Found</div><div class="stat-value text-green" id="foundStr">0</div></div>
+                <div class="stat-item"><div class="stat-label">Status</div><div class="stat-value" id="statusStr" style="font-size: 16px;">Ready</div></div>
+            </div>
+
+            <div class="actions-wrapper">
+                <div id="group-start" class="btn-group active">
+                    <button class="btn btn-start" onclick="startScan()">Start Scanning</button>
                 </div>
-                <div class="stat-item">
-                    <div class="stat-label">Speed</div>
-                    <div class="stat-value"><span id="speedStr">0</span> <small style="font-size:12px; color:var(--text-tertiary)">/s</small></div>
+                
+                <div id="group-stop" class="btn-group">
+                    <button class="btn btn-stop" onclick="stopScan()">Stop</button>
                 </div>
-                <div class="stat-item">
-                    <div class="stat-label">Found</div>
-                    <div class="stat-value text-green" id="foundStr">0</div>
+
+                <div id="group-resume" class="btn-group">
+                    <button class="btn btn-resume" onclick="resumeScan()">▶ Resume Scan</button>
+                    <button class="btn btn-clear" onclick="resetScan()">↺ Reset / New</button>
                 </div>
-                <div class="stat-item">
-                    <div class="stat-label">Status</div>
-                    <div class="stat-value" id="statusStr" style="font-size: 16px;">Ready</div>
+
+                <div id="group-finished" class="btn-group">
+                    <button class="btn btn-done">✅ Scan Complete</button>
+                    <button class="btn btn-clear" onclick="resetScan()">↺ Start New Scan</button>
                 </div>
             </div>
 
-            <div class="actions">
-                <button id="startBtn" class="btn btn-start" onclick="startScan()">Start Scanning</button>
-                <button id="stopBtn" class="btn btn-stop" onclick="stopScan()">Stop</button>
-            </div>
         </div>
 
         <div class="results-section">
-            <div class="results-header">LIVE HITS</div>
+            <div class="results-header">LIVE HITS (Highest First)</div>
             <div id="results">
-                <div style="padding: 40px; text-align: center; color: var(--text-tertiary);">
-                    No hits yet. Start scanning to see results.
-                </div>
+                <div style="padding: 40px; text-align: center; color: var(--text-tertiary);" id="emptyMsg">No hits yet.</div>
             </div>
         </div>
-
     </div>
 
     <div id="infoModal" class="modal-overlay">
         <div class="modal-box">
             <div class="modal-title">Scanner Guide</div>
             <div class="modal-body">
-                <p><strong>1. Using "Import Text File"</strong><br>
-                For lists larger than 5,000 lines, do not paste directly. Click "Import Text File" to load <code>.txt</code> files instantly without freezing the app.</p>
-                
-                <p style="margin-top:16px;"><strong>2. Auto-Save</strong><br>
-                Every hit is automatically saved to <code>found_balances.txt</code> on your Desktop.</p>
-
-                <p style="margin-top:16px;"><strong>3. Privacy</strong><br>
-                This tool is open-source. Keys are validated locally and never sent to any server except for public balance checks.</p>
-
-                <p style="margin-top:16px; font-size:13px; text-align:center;">
-                    <a href="https://github.com/devdasx/Bitcoin-Mnemonic-WIF-Scanner-Open-Source-HD-Wallets-" target="_blank" style="color:var(--accent-blue); text-decoration:none;">View Source Code on GitHub</a>
-                </p>
+                <p><strong>1. Using "Import Text File"</strong><br>For lists larger than 5,000 lines, use import.</p>
+                <p style="margin-top:16px;"><strong>2. Resume Feature</strong><br>You can pause the scan and resume it later without losing progress.</p>
+                <p style="margin-top:16px;"><strong>3. Privacy</strong><br>Keys are validated locally. Only public balances are checked.</p>
             </div>
             <button class="modal-btn" onclick="closeModal()">Close</button>
         </div>
     </div>
 
     <script>
-        const { ipcRenderer } = require('electron');
+        const { ipcRenderer, clipboard } = require('electron');
 
-        // Theme Logic
+        // --- THEME ---
         function toggleTheme() {
             const body = document.body;
             const btn = document.getElementById('themeBtn');
             const isLight = body.getAttribute('data-theme') === 'light';
-            
             body.setAttribute('data-theme', isLight ? 'dark' : 'light');
             btn.innerText = isLight ? 'Light Mode' : 'Dark Mode';
             localStorage.setItem('theme', isLight ? 'dark' : 'light');
         }
-        
-        // Restore Theme
-        if(localStorage.getItem('theme') === 'light') {
-            document.body.setAttribute('data-theme', 'light');
-            document.getElementById('themeBtn').innerText = 'Dark Mode';
-        }
+        if(localStorage.getItem('theme') === 'light') toggleTheme();
 
-        // Modal Logic with Animation
+        // --- MODAL ---
         function openModal() { document.getElementById('infoModal').classList.add('active'); }
         function closeModal() { document.getElementById('infoModal').classList.remove('active'); }
-        
-        // Close on background click
-        document.getElementById('infoModal').addEventListener('click', (e) => {
-            if (e.target === document.getElementById('infoModal')) closeModal();
-        });
+        document.getElementById('infoModal').addEventListener('click', (e) => { if (e.target === document.getElementById('infoModal')) closeModal(); });
 
-        // App Logic
-        function clearInput() { document.getElementById('inputArea').value = ''; }
-        function openResultsFolder() { ipcRenderer.send('open-results-folder'); }
+        // --- CORE LOGIC ---
+        function setUiState(state) {
+            // States: 'start', 'running', 'paused', 'finished'
+            document.querySelectorAll('.btn-group').forEach(el => el.classList.remove('active'));
+            document.getElementById('inputArea').disabled = (state !== 'start' && state !== 'finished');
+
+            if(state === 'start') document.getElementById('group-start').classList.add('active');
+            else if(state === 'running') document.getElementById('group-stop').classList.add('active');
+            else if(state === 'paused') document.getElementById('group-resume').classList.add('active');
+            else if(state === 'finished') document.getElementById('group-finished').classList.add('active');
+        }
 
         async function loadFile() {
             const content = await ipcRenderer.invoke('open-file-dialog');
             if (content) document.getElementById('inputArea').value = content;
         }
 
+        function clearAll() {
+            if(confirm("Clear inputs and results?")) {
+                document.getElementById('inputArea').value = '';
+                resetScan();
+            }
+        }
+        function clearInput() { document.getElementById('inputArea').value = ''; }
+        function openResultsFolder() { ipcRenderer.send('open-results-folder'); }
+
+        // --- SCAN CONTROLS ---
         function startScan() {
             const text = document.getElementById('inputArea').value;
             if(!text.trim()) return alert("Please input data first.");
             
-            document.getElementById('startBtn').style.display = 'none';
-            document.getElementById('stopBtn').style.display = 'block';
+            setUiState('running');
             document.getElementById('results').innerHTML = ""; 
-            
             ipcRenderer.send('start-scan', text);
         }
 
         function stopScan() {
-            if(confirm("Are you sure you want to stop?")) ipcRenderer.send('stop-scan');
+            ipcRenderer.send('stop-scan');
+            setUiState('paused');
+            document.getElementById('statusStr').innerText = "Paused";
         }
 
-        function resetButtons() {
-            document.getElementById('startBtn').style.display = 'block';
-            document.getElementById('stopBtn').style.display = 'none';
+        function resumeScan() {
+            setUiState('running');
+            ipcRenderer.send('resume-scan');
         }
 
-        // IPC Listeners
+        function resetScan() {
+            setUiState('start');
+            ipcRenderer.send('reset-scan');
+            document.getElementById('statusStr').innerText = "Ready";
+            document.getElementById('progStr').innerText = "0 / 0";
+            document.getElementById('progressBar').style.width = "0%";
+            document.getElementById('inputArea').disabled = false;
+        }
+
+        function copyToClipboard(text) {
+            clipboard.writeText(text);
+            alert("Copied to clipboard!");
+        }
+
+        // --- IPC EVENTS ---
         ipcRenderer.on('status-update', (e, data) => {
             document.getElementById('statusStr').innerText = "Running";
             document.getElementById('progStr').innerText = `0 / ${data.total}`;
@@ -474,21 +341,47 @@
         });
 
         ipcRenderer.on('hit-found', (e, data) => {
-            // Remove "No hits" placeholder if it exists
-            if(document.getElementById('results').innerText.includes("No hits yet")) {
-                document.getElementById('results').innerHTML = "";
-            }
+            const container = document.getElementById('results');
+            const emptyMsg = document.getElementById('emptyMsg');
+            if(emptyMsg) emptyMsg.remove();
 
             const div = document.createElement('div');
             div.className = 'hit';
-            div.innerHTML = `<span class="hit-key">${data.line}</span> <span class="hit-bal">${data.balance} BTC</span>`;
-            document.getElementById('results').prepend(div);
+            div.dataset.balance = data.balance;
+            div.innerHTML = `
+                <div class="hit-left">
+                    <span class="hit-bal">${data.balance} BTC</span>
+                    <span class="hit-key" title="${data.line}">${data.line}</span>
+                </div>
+                <div class="hit-right">
+                    <button class="copy-btn" onclick="copyToClipboard('${data.line}')">Copy</button>
+                </div>
+            `;
+
+            // Insert Sorted
+            const children = Array.from(container.children);
+            let inserted = false;
+            for (let i = 0; i < children.length; i++) {
+                if (parseFloat(data.balance) > parseFloat(children[i].dataset.balance)) {
+                    container.insertBefore(div, children[i]);
+                    inserted = true;
+                    break;
+                }
+            }
+            if (!inserted) container.appendChild(div);
         });
 
         ipcRenderer.on('finished', (e, data) => {
-            resetButtons();
-            document.getElementById('statusStr').innerText = data.stopped ? "Stopped" : "Done";
-            if(!data.stopped) alert(`Scan Complete. Found ${data.found} wallets.`);
+            if (data.stopped) {
+                // If manual stop, stay in paused state
+                setUiState('paused');
+                document.getElementById('statusStr').innerText = "Paused";
+            } else {
+                // If actually finished list
+                setUiState('finished');
+                document.getElementById('statusStr').innerText = "Done";
+                alert(`Scan Finished! Found ${data.found} wallets.`);
+            }
         });
     </script>
 </body>
