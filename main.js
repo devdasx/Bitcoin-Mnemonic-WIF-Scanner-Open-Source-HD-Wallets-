@@ -8,11 +8,13 @@ let mainWindow;
 
 // --- GLOBAL STATE ---
 let scanState = {
-    items: [],       // The clean list of mnemonics/wifs
-    pointer: 0,      // Current index we are processing
-    found: 0,        // Total hits found
+    items: [],
+    pointer: 0,
+    found: 0,
     isScanning: false,
-    controller: new AbortController() // To cancel requests instantly
+    pausedByNetwork: false,
+    activeWorkers: 0, // NEW: Tracks items currently "in-flight"
+    controller: new AbortController()
 };
 
 function createWindow() {
@@ -84,22 +86,21 @@ async function scanLine(line, type) {
 
     try {
         const res = await axios.post(`https://generate-wallet.vercel.app/api/${endpoint}`, payload, {
-            signal: scanState.controller.signal // Link to AbortController
+            signal: scanState.controller.signal
         });
         const sats = res.data?.result?.grandTotals?.totalBalance || 0;
         return { ok: true, balance: sats / 100000000 };
     } catch (error) {
-        // If cancelled, don't return error, return specific flag
         if (axios.isCancel(error)) return { ok: false, cancelled: true };
         return { ok: false, error: error.message };
     }
 }
 
-// --- WORKER POOL ---
 async function startWorkerPool() {
     const startTime = Date.now();
+    scanState.activeWorkers = 0; // Reset counter
     
-    // Helper to get next item atomically
+    // Helper to get next item safely
     const getNextItem = () => {
         if (scanState.pointer >= scanState.items.length) return null;
         return scanState.items[scanState.pointer++];
@@ -108,38 +109,45 @@ async function startWorkerPool() {
     const worker = async () => {
         while (scanState.isScanning) {
             const item = getNextItem();
-            if (!item) break; // End of list
+            if (!item) break;
+
+            // Track that this worker is busy
+            scanState.activeWorkers++;
 
             let attempts = 0;
             let success = false;
             let result;
 
-            while (attempts < MAX_RETRIES && !success && scanState.isScanning) {
-                attempts++;
-                result = await scanLine(item.line, item.type);
+            try {
+                while (attempts < MAX_RETRIES && !success && scanState.isScanning) {
+                    attempts++;
+                    result = await scanLine(item.line, item.type);
 
-                if (result.cancelled) break; // Exit loop if stopped
+                    if (result.cancelled) break; // Network cut handling happens in 'finally'
 
-                if (result.ok) {
-                    success = true;
-                    if (result.balance > 0) {
-                        scanState.found++;
-                        const btc = result.balance.toFixed(8);
-                        
-                        mainWindow.webContents.send('hit-found', { line: item.line, balance: btc });
-                        
-                        const logPath = path.join(app.getPath('desktop'), 'found_balances.txt');
-                        fs.appendFileSync(logPath, `${item.line} | ${btc}\n`);
+                    if (result.ok) {
+                        success = true;
+                        if (result.balance > 0) {
+                            scanState.found++;
+                            const btc = result.balance.toFixed(8);
+                            mainWindow.webContents.send('hit-found', { line: item.line, balance: btc });
+                            
+                            const logPath = path.join(app.getPath('desktop'), 'found_balances.txt');
+                            fs.appendFileSync(logPath, `${item.line} | ${btc}\n`);
+                        }
+                    } else {
+                        if (attempts < MAX_RETRIES && scanState.isScanning) await sleep(RETRY_DELAY);
                     }
-                } else {
-                    if (attempts < MAX_RETRIES && scanState.isScanning) await sleep(RETRY_DELAY);
                 }
+            } finally {
+                // Worker finished this item (success, fail, or cancel)
+                scanState.activeWorkers--;
             }
             
             // Update UI periodically
             if (scanState.pointer % 20 === 0 || scanState.pointer === scanState.items.length) {
                 const elapsed = (Date.now() - startTime) / 1000;
-                const speed = elapsed > 0 ? ((scanState.pointer - 0) / elapsed).toFixed(1) : "0.0"; // speed calculation simplified for resume
+                const speed = elapsed > 0 ? ((scanState.pointer) / elapsed).toFixed(1) : "0.0";
 
                 mainWindow.webContents.send('progress', { 
                     processed: scanState.pointer, 
@@ -151,35 +159,28 @@ async function startWorkerPool() {
         }
     };
 
-    // Spawn Workers
     const workers = new Array(CONCURRENCY_LIMIT).fill(0).map(() => worker());
     await Promise.all(workers);
 
-    // If we finished the list
-    if (scanState.pointer >= scanState.items.length) {
-        mainWindow.webContents.send('finished', { found: scanState.found });
+    // Only declare finished if we actually reached the end AND weren't just paused
+    if (scanState.pointer >= scanState.items.length && !scanState.pausedByNetwork && scanState.isScanning) {
+        mainWindow.webContents.send('finished', { found: scanState.found, stopped: false });
         scanState.isScanning = false;
     }
 }
 
 // --- IPC EVENTS ---
-
-// 1. START NEW SCAN
 ipcMain.on('start-scan', (event, rawText) => {
-    // Reset State
     scanState.pointer = 0;
     scanState.found = 0;
     scanState.isScanning = true;
+    scanState.pausedByNetwork = false;
     scanState.controller = new AbortController();
 
-    // Parse & Deduplicate
     const rawLines = rawText.split('\n').map(l => l.trim()).filter(l => l.length > 0);
     const uniqueLines = new Set(rawLines);
 
-    mainWindow.webContents.send('status-update', { 
-        total: uniqueLines.size, 
-        msg: `Validating ${uniqueLines.size} unique items...` 
-    });
+    mainWindow.webContents.send('status-update', { total: uniqueLines.size, msg: `Validating...` });
 
     const validItems = [];
     for (const line of uniqueLines) {
@@ -188,41 +189,61 @@ ipcMain.on('start-scan', (event, rawText) => {
     }
 
     scanState.items = validItems;
-
-    mainWindow.webContents.send('status-update', { 
-        total: validItems.length, 
-        msg: `Scanning ${validItems.length} valid items...` 
-    });
+    mainWindow.webContents.send('status-update', { total: validItems.length, msg: `Scanning...` });
 
     startWorkerPool();
 });
 
-// 2. RESUME SCAN
 ipcMain.on('resume-scan', () => {
     if (scanState.items.length === 0 || scanState.pointer >= scanState.items.length) return;
-    
     scanState.isScanning = true;
-    scanState.controller = new AbortController(); // New controller for new batch
-    
-    mainWindow.webContents.send('status-update', { 
-        total: scanState.items.length, 
-        msg: `Resuming from line ${scanState.pointer}...` 
-    });
-
+    scanState.controller = new AbortController();
     startWorkerPool();
 });
 
-// 3. STOP SCAN (Immediate)
 ipcMain.on('stop-scan', () => {
     scanState.isScanning = false;
-    scanState.controller.abort(); // KILL all active requests immediately
+    scanState.pausedByNetwork = false;
+    scanState.controller.abort();
+    // Manual stop doesn't need rollback, we assume user is cancelling
 });
 
-// 4. CLEAR/RESET
 ipcMain.on('reset-scan', () => {
     scanState.isScanning = false;
+    scanState.pausedByNetwork = false;
     scanState.controller.abort();
     scanState.items = [];
     scanState.pointer = 0;
     scanState.found = 0;
+    scanState.activeWorkers = 0;
+});
+
+// --- NETWORK GUARDIAN (Logic Update) ---
+ipcMain.on('network-status', (event, status) => {
+    if (status === 'offline') {
+        if (scanState.isScanning) {
+            console.log("Network lost. Pausing...");
+            scanState.isScanning = false;
+            scanState.pausedByNetwork = true;
+            scanState.controller.abort(); // Kill connections immediately
+            
+            // --- ROLLBACK LOGIC ---
+            // We rewind the pointer by the number of workers that were "in-flight".
+            // This ensures those items are re-queued when we resume.
+            // Math.max ensures we don't go below 0.
+            const rewindAmount = scanState.activeWorkers;
+            scanState.pointer = Math.max(0, scanState.pointer - rewindAmount);
+            scanState.activeWorkers = 0; // Reset worker count since we killed them
+            
+            console.log(`Rolled back ${rewindAmount} items to ensure data safety.`);
+        }
+    } else if (status === 'online') {
+        if (scanState.pausedByNetwork) {
+            console.log("Network restored. Auto-resuming...");
+            scanState.isScanning = true;
+            scanState.pausedByNetwork = false;
+            scanState.controller = new AbortController();
+            startWorkerPool();
+        }
+    }
 });
