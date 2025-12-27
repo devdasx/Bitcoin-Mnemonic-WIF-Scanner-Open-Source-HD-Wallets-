@@ -111,10 +111,8 @@
         textarea:focus { background: var(--bg-input); box-shadow: 0 0 0 3px var(--focus-ring); }
         textarea:disabled { opacity: 0.5; cursor: not-allowed; }
 
-        /* --- Button Groups (The Magic Part) --- */
+        /* --- Button Groups --- */
         .actions-wrapper { margin-top: 20px; height: 44px; position: relative; }
-        
-        /* Groups: Start, Stop, Resume, Finished */
         .btn-group {
             display: flex; gap: 12px; width: 100%; height: 100%;
             position: absolute; top: 0; left: 0;
@@ -127,14 +125,11 @@
 
         .btn-start { background: var(--accent-blue); color: white; }
         .btn-start:hover { background: var(--accent-blue-hover); }
-
         .btn-stop { background: var(--bg-card); color: var(--accent-red); border: 1px solid var(--accent-red); }
         .btn-stop:hover { background: var(--accent-red); color: white; }
-
         .btn-resume { background: var(--accent-green); color: white; }
         .btn-clear { background: var(--bg-input); color: var(--text-secondary); border: 1px solid var(--separator); }
         .btn-clear:hover { border-color: var(--accent-red); color: var(--accent-red); }
-
         .btn-done { background: var(--bg-input); color: var(--accent-green); border: 1px solid var(--accent-green); cursor: default; }
 
         /* --- Stats --- */
@@ -161,6 +156,24 @@
         .hit-bal { color: var(--accent-green); font-weight: 700; font-size: 14px; }
         .copy-btn { background: var(--bg-input); border: 1px solid var(--separator); color: var(--accent-blue); font-size: 12px; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-weight: 500; }
         .copy-btn:hover { background: var(--separator); }
+
+        /* --- Network Offline Overlay (PRO Feature) --- */
+        #offlineOverlay {
+            display: none;
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(8px);
+            z-index: 9999;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            text-align: center;
+        }
+        #offlineOverlay.active { display: flex; }
+        .offline-icon { font-size: 48px; margin-bottom: 20px; }
+        .offline-title { font-size: 24px; font-weight: 700; margin-bottom: 10px; }
+        .offline-msg { font-size: 16px; color: #aaa; max-width: 400px; line-height: 1.5; }
 
         /* --- Modal --- */
         .modal-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.4); backdrop-filter: blur(5px); z-index: 1000; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.2s; }
@@ -208,22 +221,18 @@
                 <div id="group-start" class="btn-group active">
                     <button class="btn btn-start" onclick="startScan()">Start Scanning</button>
                 </div>
-                
                 <div id="group-stop" class="btn-group">
                     <button class="btn btn-stop" onclick="stopScan()">Stop</button>
                 </div>
-
                 <div id="group-resume" class="btn-group">
                     <button class="btn btn-resume" onclick="resumeScan()">▶ Resume Scan</button>
                     <button class="btn btn-clear" onclick="resetScan()">↺ Reset / New</button>
                 </div>
-
                 <div id="group-finished" class="btn-group">
                     <button class="btn btn-done">✅ Scan Complete</button>
                     <button class="btn btn-clear" onclick="resetScan()">↺ Start New Scan</button>
                 </div>
             </div>
-
         </div>
 
         <div class="results-section">
@@ -231,6 +240,15 @@
             <div id="results">
                 <div style="padding: 40px; text-align: center; color: var(--text-tertiary);" id="emptyMsg">No hits yet.</div>
             </div>
+        </div>
+    </div>
+
+    <div id="offlineOverlay">
+        <div class="offline-icon">📡</div>
+        <div class="offline-title">No Internet Connection</div>
+        <div class="offline-msg">
+            Scanning has been paused automatically.<br>
+            Please reconnect to the internet to resume.
         </div>
     </div>
 
@@ -249,6 +267,27 @@
     <script>
         const { ipcRenderer, clipboard } = require('electron');
 
+        // --- NETWORK MONITORING (PRO) ---
+        function updateOnlineStatus() {
+            const status = navigator.onLine ? 'online' : 'offline';
+            const overlay = document.getElementById('offlineOverlay');
+            
+            if (status === 'offline') {
+                overlay.classList.add('active');
+            } else {
+                overlay.classList.remove('active');
+            }
+            
+            // Notify Main Process
+            ipcRenderer.send('network-status', status);
+        }
+
+        window.addEventListener('online', updateOnlineStatus);
+        window.addEventListener('offline', updateOnlineStatus);
+        // Check on load
+        updateOnlineStatus();
+
+
         // --- THEME ---
         function toggleTheme() {
             const body = document.body;
@@ -265,9 +304,8 @@
         function closeModal() { document.getElementById('infoModal').classList.remove('active'); }
         document.getElementById('infoModal').addEventListener('click', (e) => { if (e.target === document.getElementById('infoModal')) closeModal(); });
 
-        // --- CORE LOGIC ---
+        // --- UI STATE ---
         function setUiState(state) {
-            // States: 'start', 'running', 'paused', 'finished'
             document.querySelectorAll('.btn-group').forEach(el => el.classList.remove('active'));
             document.getElementById('inputArea').disabled = (state !== 'start' && state !== 'finished');
 
@@ -291,8 +329,9 @@
         function clearInput() { document.getElementById('inputArea').value = ''; }
         function openResultsFolder() { ipcRenderer.send('open-results-folder'); }
 
-        // --- SCAN CONTROLS ---
+        // --- CONTROLS ---
         function startScan() {
+            if (!navigator.onLine) return alert("No Internet Connection!");
             const text = document.getElementById('inputArea').value;
             if(!text.trim()) return alert("Please input data first.");
             
@@ -308,6 +347,7 @@
         }
 
         function resumeScan() {
+            if (!navigator.onLine) return alert("No Internet Connection!");
             setUiState('running');
             ipcRenderer.send('resume-scan');
         }
@@ -358,7 +398,6 @@
                 </div>
             `;
 
-            // Insert Sorted
             const children = Array.from(container.children);
             let inserted = false;
             for (let i = 0; i < children.length; i++) {
@@ -373,11 +412,9 @@
 
         ipcRenderer.on('finished', (e, data) => {
             if (data.stopped) {
-                // If manual stop, stay in paused state
                 setUiState('paused');
                 document.getElementById('statusStr').innerText = "Paused";
             } else {
-                // If actually finished list
                 setUiState('finished');
                 document.getElementById('statusStr').innerText = "Done";
                 alert(`Scan Finished! Found ${data.found} wallets.`);
