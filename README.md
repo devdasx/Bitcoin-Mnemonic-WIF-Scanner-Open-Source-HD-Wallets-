@@ -19,7 +19,6 @@ We have recently upgraded the interface to a **Modern "Apple-Style" Aesthetic** 
 | **🗝️ Universal Support** | Compatible with **BIP39 Mnemonics** (12, 15, 18, 21, 24 words) and **WIF Private Keys** (Compressed `L/K` & Uncompressed `5`). |
 | **⚡ High-Speed Engine** | Runs **500 concurrent worker threads**. Processing is continuous and non-blocking. |
 | **🛑 Control** | Includes a **Stop Button** to gracefully pause scanning at any time, and a **Clear Button** to reset inputs. |
-| **🔄 Auto-Retry System** | If an API request fails, the system automatically retries that specific item up to **5 times** before skipping. |
 | **💾 Auto-Save** | All hits (wallets with balance) are automatically saved to `found_balances.txt` on your **Desktop**. |
 
 ---
